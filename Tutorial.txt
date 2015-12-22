@@ -1,0 +1,103 @@
+Pré Resquisitos:
+
+O tutorial foi feito utilizando o Ubuntu mas acredito que tambem funcione no Debian
+Voce precisa ter instalado o Apache, caso não tenha, aconselho este video: https://www.youtube.com/watch?v=zBABrjdEfFw
+ 
+Antes de iniciar, atualize os pacotes com o comando abaixo:
+sudo apt-get update
+
+Passo 1 - Vamos ativar o modulo SSL
+
+sudo a2enmod ssl
+
+Depois de ativo, é necessario reiniciar o apache:
+sudo service apache2 restart
+
+Passo 2 - Criando o Certificado
+
+-- Vamos criar uma pasta para armazenar o certificado
+sudo mkdir /etc/apache2/ssl
+
+-- Criando o certificado na pasta que criamos anteriormente
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt
+
+-- Ao criar o certificado, sera solicitado algumas informaçoes, a mais importante é "Common Name (e.g. server FQDN or YOUR name) []:"
+-- Nesse campo voce deverá colocar seu dominio ou seu ip
+-- Ao terminar de inserir todas as informaçoes , seu certificado sera gerado em: /etc/apache2/ssl
+
+Passo 3 - Configurando o Apache para utilizar o SSL
+
+-- Abra o aquivo de configuracao
+sudo nano /etc/apache2/sites-available/default-ssl.conf
+
+-- Adicione as linas abaixo da linha "<IfModule mod_ssl.c>" no arquivo:
+-- Obs: "DocumentRoot" é o caminho que ira conter sua pagina .php
+
+	<VirtualHost *:443>
+          DocumentRoot /var/www/html
+          ErrorLog ${APACHE_LOG_DIR}/error.log
+          CustomLog ${APACHE_LOG_DIR}/access.log combined
+          SSLEngine on
+
+          SSLCertificateFile /etc/apache2/ssl/apache.crt
+          SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+ 	</virtualHost>
+-- Depois de inserir pressione CTRL + X para fechar o arquivo, ira pedir para gravar, pressione Y para confirmar.
+
+-- Configurando para utilizar as configuracoes do  default-ssl.conf
+sudo a2ensite default-ssl.conf
+
+-- reinicie o apache
+sudo service apache2 restart
+
+
+-- Pronto, ja é pro seu servidor aceitar conexoes HTTPS, faca o teste com seu dominio
+https://seudominio ou https://seuip
+
+
+Passo 4 - Utilizando o BotFather para criar um Bot
+abra o telegram e pesquise o contato BotFather, chame o para conversar
+
+-- Envie o comando abaixo para solicitar a criacao do bot:
+/newbot
+
+-- Será solicitado o nome do bot. Obs: o nome deve conter bot no final, Ex: EnvioDeTestobot
+
+Ao concluir, será te enviado o token do bot, é com ele que será possivel criar a integração do php.
+Obs: Nunca compartilhe esse token.
+
+formato do token: 123456789:ABCDEFGHIJKLMNOPQRSTUVWYXZABCDEFGHI
+
+Na conversa com o BotFather voce pode gerenciar seus bots, alterar nome, criar comandos, alterar foto e etc.
+
+Passo 5 - Criacao do .php para gerenciar o bot
+
+abra o arquivo BotPrevisaoTempo.php, ele ja contem alguns comandos e exemplos.
+Alterer a $botToken na linha 4 do arquivo, insira a token gerada no passo 4.
+
+
+Salve o arquivo com o nome BotPrevisaoTempo.php na pasta que voce configurou no passo 3 (no campo DocumentRoot).
+
+Acesse a pagina para verificar se ela esta funcionando corretamente
+https://meudonio.com.br/html/BotPrevisaoTempo.php
+
+Voce deverá receber a mensagem: Bot em Funcionamento
+
+caso nao receba ou ocorra algum erro, revise se colocou o arquivo na pasta correta.
+
+Passo 6 - Setando sua pagina no webhook do seu bot
+
+No terminal, digite o comando abaixo:
+-- OBS: altere o meudonio.com.br para seu dominio ou ip, altere a token 123456789:ABCDEFGHIJKLMNOPQRSTUVWYXZABCDEFGHI para a token criada no passo 4. 
+sudo curl -F "url=https://meudonio.com.br/html/BotPrevisaoTempo.php" -F "certificate=@/etc/apache2/ssl/apache.crt" https://api.telegram.org/bot123456789:ABCDEFGHIJKLMNOPQRSTUVWYXZABCDEFGHI/setWebhook
+
+Ao execura o comando acima, voce devera receber a seguinte mensagem:
+{"ok":true,"result":true,"description":"Webhook was set"}
+
+caso tenha errado ou queira alterar o caminho do seu arquivo .php, remova o webhook acessando o link abaixo no seu navegador:
+-- OBS: altere para a token do seu bot. 
+https://api.telegram.org/bot123456789:ABCDEFGHIJKLMNOPQRSTUVWYXZABCDEFGHI/setwebhook?url=
+
+Pronto, feito isso é so enviar os comando pro seu bot que ele ira te responder
+
+Ex. comandos: /oi e /previsao
